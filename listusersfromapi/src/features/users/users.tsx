@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { TableRow, TableCell, IconButton, Collapse, Box, Table, TableHead, TableBody } from '@mui/material';
+import React, { useEffect } from 'react';
+import { TableRow, TableCell, IconButton, Collapse, Box, Table, TableHead, TableBody, Paper, MenuList, MenuItem, ListItemText } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import './Users.css';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
   
 type MyType = {
     id: number,
@@ -30,39 +30,38 @@ type MyType = {
     }
   }
 
-export function Users(props: { user: MyType; }) {
-    
-    const useStyles = makeStyles((theme) => ({
-        /* Styles applied to the root element. */
-        root: {
-          // Default root styles
-          color: 'inherit',
-          display: 'table-row',
-          verticalAlign: 'middle',
-          // We disable the focus ring for mouse, touch and keyboard users.
-          outline: 0,
-      
-          '&$hover:hover': {
-            // Set hover color
-            backgroundColor: theme.palette.action.hover,
-          },
-        },
-      
-        /* Pseudo-class applied to the root element if `hover={true}`. */
-        hover: {},
-      }));
+export function Users(props: { user: MyType; selectedId: number; setSelectedId: (selectedId: number) => any; deleteButton: (id: number) => any; editButton: (user: MyType) => any; }) {
 
-    
-    const classes = useStyles();
-
-    const [open, setOpen] = React.useState(false);
     const [todos, setTodos] = React.useState([]);
+    const [showMenu, setShowMenu] = React.useState(false);
 
     useEffect(() => {
       fetch('https://jsonplaceholder.typicode.com/users/' + props.user.id + '/todos')
         .then((response) => response.json())
         .then((data) => setTodos(data));
-    });
+    },[props.user.id]);
+
+    const clickRow = (id: number) => {
+        if (props.selectedId !== props.user.id) {
+            setShowMenu(false);
+        }
+        props.setSelectedId(id);
+    };
+
+    const clickDots = (id: number) => {
+        setShowMenu(!showMenu);
+        props.setSelectedId(id);
+    };
+
+    const clickDelete = (id: number) => {
+        props.deleteButton(id);
+        setShowMenu(!showMenu);
+    };
+
+    const clickEdit = (user: MyType) => {
+        props.editButton(user);
+        setShowMenu(!showMenu);
+    };
   
     return (
         <>
@@ -70,15 +69,15 @@ export function Users(props: { user: MyType; }) {
                     hover
                     key={props.user.id}
                     sx={{ '& > *': { borderBottom: 'unset' } }}
-                    classes={classes}
+                    onClick={() => clickRow(props.user.id)}
+                    selected={props.selectedId === props.user.id}
                 >
                 <TableCell>
                     <IconButton
                     aria-label="expand row"
                     size="small"
-                    onClick={() => setOpen(!open)}
                     >
-                    {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                    {props.selectedId === props.user.id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                     </IconButton>
                 </TableCell>
                 <TableCell>{props.user.id}</TableCell>
@@ -88,10 +87,28 @@ export function Users(props: { user: MyType; }) {
                 <TableCell>{props.user.address.city}</TableCell>
                 <TableCell>{props.user.company.name}</TableCell>
                 <TableCell>{props.user.website ? <CheckIcon /> : <CloseIcon />}</TableCell>
+                <TableCell>
+                    <IconButton
+                        size="small"
+                        onClick={() => {clickDots(props.user.id)}}
+                        >
+                        <MoreVertIcon />
+                    </IconButton>
+                    {props.selectedId === props.user.id && showMenu && <Paper sx={{ maxWidth: '100%' }}>
+                        <MenuList>
+                            <MenuItem>
+                                <ListItemText><div onClick={() => {clickEdit(props.user)}}>Edit</div></ListItemText>
+                            </MenuItem>
+                            <MenuItem>
+                                <ListItemText><div onClick={() => {clickDelete(props.user.id)}}>Remove</div></ListItemText>
+                            </MenuItem>
+                        </MenuList>
+                    </Paper>}
+                </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                    <Collapse in={open} timeout="auto" unmountOnExit>
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={10}>
+                    <Collapse in={props.selectedId === props.user.id } timeout="auto" unmountOnExit>
                         <Box sx={{ margin: 1 }}>
                             <Table size="small" aria-label="purchases">
                                 <TableHead>

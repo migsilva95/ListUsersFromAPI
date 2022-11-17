@@ -1,7 +1,0 @@
-tableRow: {
-    hover: {
-        "&$hover:hover": {
-            backgroundColor: '#49bb7b',
-        },
-    },
-}
